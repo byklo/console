@@ -11,6 +11,7 @@ import (
 const (
     DEFAULT_EXIT_COMMAND = "exit"
     DEFAULT_HELP_COMMAND = "help"
+    DEFAULT_REDO_COMMAND = "!!"
     DEFAULT_PROMPT_SYMBOL = ">"
 )
 
@@ -19,6 +20,7 @@ type Console struct {
     helps []string
     exit_command string
     help_command string
+    redo_command string
     prompt_symbol string
     scanner *bufio.Scanner
 }
@@ -29,6 +31,7 @@ func NewConsole() *Console {
         make([]string, 0),
         DEFAULT_EXIT_COMMAND,
         DEFAULT_HELP_COMMAND,
+        DEFAULT_REDO_COMMAND,
         DEFAULT_PROMPT_SYMBOL,
         bufio.NewScanner(os.Stdin),
     }
@@ -36,6 +39,7 @@ func NewConsole() *Console {
 
 func (console *Console) Run() {
     debug("console start")
+    var last_command_tokens []string
 
     for {
         command_tokens := console.prompt()
@@ -46,12 +50,15 @@ func (console *Console) Run() {
         } else if command_tokens[0] == console.help_command {
             fmt.Println(strings.Join(console.helps, "\n"))
             continue
+        } else if command_tokens[0] == console.redo_command {
+            command_tokens = last_command_tokens
         } else if command_tokens[0] == console.exit_command {
             return
         }
 
         if action, exists := console.commands[command_tokens[0]]; exists {
             action(command_tokens[1:])
+            last_command_tokens = command_tokens
         } else {
             fmt.Printf("%s: command not found\n", command_tokens[0])
         }
